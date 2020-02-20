@@ -2,17 +2,18 @@
 
 import pika
 
-connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host=''))
-channel = connection.channel()
+def start_message_listener(host, queue):
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(host=host))
+    rcv_channel = connection.channel()
 
-channel.queue_declare(queue='')
+    rcv_channel.queue_declare(queue=queue)
 
-def callback(ch, method, properties, body):
-    print(" [x] Received %r" % body)
+    rcv_channel.basic_consume(
+        queue=queue,
+        on_message_callback=print,
+        auto_ack=True
+    )
 
-channel.basic_consume(
-    queue='', on_message_callback=callback, auto_ack=True)
-
-print(' [*] Waiting for messages.)
-channel.start_consuming()
+    print(' [*] Waiting for messages.')
+    rcv_channel.start_consuming()
