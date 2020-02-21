@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import pika
+from collections import namedtuple
+
+literal = lambda **kwargs : namedtuple('literal', kwargs)(**kwargs)
 
 def start_message_listener(host, queue):
     connection = pika.BlockingConnection(
