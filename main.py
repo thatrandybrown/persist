@@ -1,7 +1,7 @@
-#!/usr/bin/env python
-
 import pika
 from collections import namedtuple
+import sys
+import json
 
 literal = lambda **kwargs : namedtuple('literal', kwargs)(**kwargs)
 
@@ -20,3 +20,14 @@ def start_message_listener(host, queue):
 
     print(' [*] Waiting for messages.')
     rcv_channel.start_consuming()
+
+def makeApp(config):
+    def start():
+        start_message_listener(
+            config['message']['uri'],
+            config['message']['consumption_queue']
+        )
+    return literal(start=start)
+
+app = makeApp(json.loads(sys.argv[1])) if len(sys.argv) == 2 else makeApp({})
+app.start()
