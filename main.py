@@ -2,8 +2,15 @@ import pika
 from collections import namedtuple
 import sys
 import json
+from tinydb import TinyDB
 
 literal = lambda **kwargs : namedtuple('literal', kwargs)(**kwargs)
+
+def write_to_disk(target, item):
+    db = TinyDB(target)
+    event_id = db.insert(item)
+    db.close()
+    return event_id
 
 def start_message_listener(host, queue):
     connection = pika.BlockingConnection(
