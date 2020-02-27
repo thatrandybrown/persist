@@ -21,7 +21,7 @@ def start_message_listener(host, queue, persistence_target):
 
     rcv_channel.basic_consume(
         queue=queue,
-        on_message_callback=print,
+        on_message_callback=lambda channel,method,properties,body : write_to_disk(persistence_target, json.loads(body)),
         auto_ack=True
     )
 
