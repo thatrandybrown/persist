@@ -2,6 +2,7 @@ import pika
 from collections import namedtuple
 import sys
 import json
+from functools import reduce
 from tinydb import TinyDB, where
 
 literal = lambda **kwargs : namedtuple('literal', kwargs)(**kwargs)
@@ -13,7 +14,10 @@ def write_to_disk(target, item):
     # this algorithm will not work for fancier data structures, probably
     all_entries = db.search(where('id') == item['id'])
     db.close()
-    return event_id
+
+    dated_entries = filter(lambda x : 'timestamp' in x.keys(), all_entries)
+    sorted_entries = sorted(dated_entries, key=lambda item: item['timestamp'])
+    return reduce(lambda x,y : {**x, **y}, sorted_entries, {})
 
 def start_message_listener(host, rcv_queue, snd_queue, persistence_target):
     connection = pika.BlockingConnection(
