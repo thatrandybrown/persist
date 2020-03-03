@@ -15,16 +15,16 @@ def write_to_disk(target, item):
     db.close()
     return event_id
 
-def start_message_listener(host, queue, persistence_target):
+def start_message_listener(host, rcv_queue, snd_queue, persistence_target):
     connection = pika.BlockingConnection(
         pika.ConnectionParameters(host=host))
     rcv_channel = connection.channel()
 
-    rcv_channel.queue_declare(queue=queue)
+    rcv_channel.queue_declare(queue=rcv_queue)
 
     rcv_channel.basic_consume(
-        queue=queue,
-        on_message_callback=lambda channel,method,properties,body : write_to_disk(persistence_target, json.loads(body)),
+        queue=rcv_queue,
+        on_message_callback=manage_message_ingest(host, snd_queue, persistence_target),
         auto_ack=True
     )
 
@@ -36,6 +36,7 @@ def makeApp(config):
         start_message_listener(
             config['message']['uri'],
             config['message']['consumption_queue'],
+            config['message']['send_queue'],
             config['persistence']['target']
         )
     return literal(start=start)
