@@ -19,6 +19,27 @@ def write_to_disk(target, item):
     sorted_entries = sorted(dated_entries, key=lambda item: item['timestamp'])
     return reduce(lambda x,y : {**x, **y}, sorted_entries, {})
 
+def send_updated_post(host, queue, post):
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(host=host))
+    channel = connection.channel()
+
+    channel.queue_declare(queue=queue)
+
+    channel.basic_publish(
+        exchange='',
+        routing_key=queue,
+        body=json.dumps(post)
+    )
+
+    connection.close()
+
+def manage_message_ingest(host, queue, persistence_target):
+    def message_ingest_manager(channel, method, properties, body):
+        post = write_to_disk(persistence_target, json.loads(body))
+        send_updated_post(host, queue, post)
+    return message_ingest_manager
+
 def start_message_listener(host, rcv_queue, snd_queue, persistence_target):
     connection = pika.BlockingConnection(
         pika.ConnectionParameters(host=host))
